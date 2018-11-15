@@ -40,7 +40,7 @@ module.exports = function (grunt) {
           'lib/ajax-adapter.js',
           'lib/editor-client.js'
         ],
-        dest: 'dist/ot.js'
+        dest: 'dist/ot-es.js'
       }
     },
     uglify: {

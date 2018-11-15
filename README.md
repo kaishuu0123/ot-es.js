@@ -1,9 +1,21 @@
+# ot-es.js
+
+## Goal
+
+* can export as ES modules
+* refactor to modern build environment.
+  * build with webpack
+  * (development) webpack-dev-server support.
+* comfortable demo environment
+
+## Summary
+
 * Documentation: http://operational-transformation.github.io/
 * Compatibility: Requires CodeMirror >= 4.0
 * Live demo: http://ot-demo.timbaumann.info/
 * Visualization: http://operational-transformation.github.io/visualization.html
-* License: [MIT license](https://github.com/Operational-Transformation/ot.js/blob/master/LICENSE)
-* Report bugs at https://github.com/Operational-Transformation/ot.js/issues or write a mail to [tim@timbaumann.info](mailto:tim@timbaumann.info)
+* License: [MIT license](https://github.com/kaishuu0123/ot-es.js/blob/master/LICENSE)
+* Report bugs at https://github.com/kaishuu0123/ot-es.js/issues
 * Travis CI: [![Build Status][travis-image]][travis-url]
 * NPM: [![NPM][npm-image]][npm-url]
 
