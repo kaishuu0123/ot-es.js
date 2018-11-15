@@ -1,18 +1,18 @@
 {
-  "name": "ot",
-  "description": "Collaborative editing using operational transformation",
+  "name": "ot-es",
+  "description": "Collaborative editing using operational transformation. Exported as ES modules.",
   "keywords": [
     "operational transformation"
   ],
   "version": "0.0.18",
-  "author": "Tim Baumann <tim@timbaumann.info> (http://timbaumann.info), Max Wu <jackymaxj@gmail.com>",
-  "homepage": "http://operational-transformation.github.com",
+  "author": "Koki Oyatsu <kaishuu0123@gmail.com> (https://saino.me/), Tim Baumann <tim@timbaumann.info> (http://timbaumann.info), Max Wu <jackymaxj@gmail.com>",
+  "homepage": "https://github.com/kaishuu0123/ot-es.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/operational-transformation/ot.js"
+    "url": "https://github.com/kaishuu0123/ot-es.js"
   },
   "bugs": {
-    "url": "https://github.com/operational-transformation/ot.js/issues"
+    "url": "https://github.com/kaishuu0123/ot-es.js/issues"
   },
   "main": "./lib/index.js",
   "dependencies": {},
@@ -33,7 +33,7 @@
   "licenses": [
     {
       "type": "MIT",
-      "url": "https://github.com/github.com/operational-transformation/ot.js/raw/master/LICENSE"
+      "url": "https://raw.githubusercontent.com/kaishuu0123/ot-es.js/master/LICENSE"
     }
   ]
 }
