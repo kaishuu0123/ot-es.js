@@ -1,12 +1,8 @@
-/*global ot */
+import TextOperation from '../common/text-operation';
+import Selection from '../common/selection';
 
-ot.CodeMirrorAdapter = (function (global) {
-  'use strict';
-
-  var TextOperation = ot.TextOperation;
-  var Selection = ot.Selection;
-
-  function CodeMirrorAdapter (cm) {
+export default class CodeMirror {
+  constructor(cm) {
     this.cm = cm;
     this.ignoreNextChange = false;
     this.changeInProgress = false;
@@ -26,7 +22,7 @@ ot.CodeMirrorAdapter = (function (global) {
   }
 
   // Removes all event listeners from the CodeMirror instance.
-  CodeMirrorAdapter.prototype.detach = function () {
+  detach () {
     this.cm.off('changes', this.onChanges);
     this.cm.off('change', this.onChange);
     this.cm.off('cursorActivity', this.onCursorActivity);
@@ -56,7 +52,7 @@ ot.CodeMirrorAdapter = (function (global) {
   // in CodeMirror v4) or single change or linked list of changes (as returned
   // by the 'change' event in CodeMirror prior to version 4) into a
   // TextOperation and its inverse and returns them as a two-element array.
-  CodeMirrorAdapter.operationFromCodeMirrorChanges = function (changes, doc) {
+  static operationFromCodeMirrorChanges = function (changes, doc) {
     // Approach: Replay the changes, beginning with the most recent one, and
     // construct the operation and its inverse. We have to convert the position
     // in the pre-change coordinate system to an index. We have a method to
@@ -135,11 +131,11 @@ ot.CodeMirrorAdapter = (function (global) {
   };
 
   // Singular form for backwards compatibility.
-  CodeMirrorAdapter.operationFromCodeMirrorChange =
-    CodeMirrorAdapter.operationFromCodeMirrorChanges;
+  static operationFromCodeMirrorChange =
+    operationFromCodeMirrorChanges;
 
   // Apply an operation to a CodeMirror instance.
-  CodeMirrorAdapter.applyOperationToCodeMirror = function (operation, cm) {
+  static applyOperationToCodeMirror = function (operation, cm) {
     cm.operation(function () {
       var ops = operation.ops;
       var index = 0; // holds the current index into CodeMirror's content
@@ -164,11 +160,11 @@ ot.CodeMirrorAdapter = (function (global) {
     });
   };
 
-  CodeMirrorAdapter.prototype.registerCallbacks = function (cb) {
+  registerCallbacks (cb) {
     this.callbacks = cb;
   };
 
-  CodeMirrorAdapter.prototype.onChange = function () {
+  onChange () {
     // By default, CodeMirror's event order is the following:
     // 1. 'change', 2. 'cursorActivity', 3. 'changes'.
     // We want to fire the 'selectionChange' event after the 'change' event,
@@ -178,7 +174,7 @@ ot.CodeMirrorAdapter = (function (global) {
     this.changeInProgress = true;
   };
 
-  CodeMirrorAdapter.prototype.onChanges = function (_, changes) {
+  onChanges (_, changes) {
     if (!this.ignoreNextChange) {
       var pair = CodeMirrorAdapter.operationFromCodeMirrorChanges(changes, this.cm);
       this.trigger('change', pair[0], pair[1]);
@@ -188,8 +184,7 @@ ot.CodeMirrorAdapter = (function (global) {
     this.ignoreNextChange = false;
   };
 
-  CodeMirrorAdapter.prototype.onCursorActivity =
-  CodeMirrorAdapter.prototype.onFocus = function () {
+  onFocus () {
     if (this.changeInProgress) {
       this.selectionChanged = true;
     } else {
@@ -197,15 +192,23 @@ ot.CodeMirrorAdapter = (function (global) {
     }
   };
 
-  CodeMirrorAdapter.prototype.onBlur = function () {
+  onCursorActivity () {
+    if (this.changeInProgress) {
+      this.selectionChanged = true;
+    } else {
+      this.trigger('selectionChange');
+    }
+  }
+
+  onBlur () {
     if (!this.cm.somethingSelected()) { this.trigger('blur'); }
   };
 
-  CodeMirrorAdapter.prototype.getValue = function () {
+  getValue () {
     return this.cm.getValue();
   };
 
-  CodeMirrorAdapter.prototype.getSelection = function () {
+  getSelection () {
     var cm = this.cm;
 
     var selectionList = cm.listSelections();
@@ -220,7 +223,7 @@ ot.CodeMirrorAdapter = (function (global) {
     return new Selection(ranges);
   };
 
-  CodeMirrorAdapter.prototype.setSelection = function (selection) {
+  setSelection (selection) {
     var ranges = [];
     for (var i = 0; selection && i < selection.ranges.length; i++) {
       var range = selection.ranges[i];
@@ -245,7 +248,7 @@ ot.CodeMirrorAdapter = (function (global) {
     };
   }());
 
-  CodeMirrorAdapter.prototype.setOtherCursor = function (position, color, clientId) {
+  setOtherCursor (position, color, clientId) {
     var cursorPos = this.cm.posFromIndex(position);
     var cursorCoords = this.cm.cursorCoords(cursorPos);
     var cursorEl = document.createElement('span');
@@ -264,7 +267,7 @@ ot.CodeMirrorAdapter = (function (global) {
     return this.cm.setBookmark(cursorPos, { widget: cursorEl, insertLeft: true });
   };
 
-  CodeMirrorAdapter.prototype.setOtherSelectionRange = function (range, color, clientId) {
+  setOtherSelectionRange (range, color, clientId) {
     var match = /^#([0-9a-fA-F]{6})$/.exec(color);
     if (!match) { throw new Error("only six-digit hex colors are allowed."); }
     var selectionClassName = 'selection-' + match[1];
@@ -282,7 +285,7 @@ ot.CodeMirrorAdapter = (function (global) {
     );
   };
 
-  CodeMirrorAdapter.prototype.setOtherSelection = function (selection, color, clientId) {
+  setOtherSelection (selection, color, clientId) {
     var selectionObjects = [];
     for (var i = 0; i < selection.ranges.length; i++) {
       var range = selection.ranges[i];
@@ -301,24 +304,24 @@ ot.CodeMirrorAdapter = (function (global) {
     };
   };
 
-  CodeMirrorAdapter.prototype.trigger = function (event) {
+  trigger (event) {
     var args = Array.prototype.slice.call(arguments, 1);
     var action = this.callbacks && this.callbacks[event];
     if (action) { action.apply(this, args); }
   };
 
-  CodeMirrorAdapter.prototype.applyOperation = function (operation) {
+  applyOperation (operation) {
     if (!operation.isNoop()) {
       this.ignoreNextChange = true;
     }
     CodeMirrorAdapter.applyOperationToCodeMirror(operation, this.cm);
   };
 
-  CodeMirrorAdapter.prototype.registerUndo = function (undoFn) {
+  registerUndo (undoFn) {
     this.cm.undo = undoFn;
   };
 
-  CodeMirrorAdapter.prototype.registerRedo = function (redoFn) {
+  registerRedo (redoFn) {
     this.cm.redo = redoFn;
   };
 
@@ -354,6 +357,10 @@ ot.CodeMirrorAdapter = (function (global) {
       blue: parseInt(triplets[2], 16)
     };
   }
+}
+
+ot.CodeMirrorAdapter = (function (global) {
+
 
   return CodeMirrorAdapter;
 

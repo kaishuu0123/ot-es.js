@@ -1,24 +1,16 @@
-if (typeof ot === 'undefined') {
-  var ot = {};
-}
-
-ot.Server = (function (global) {
-  'use strict';
-
-  // Constructor. Takes the current document as a string and optionally the array
-  // of all operations.
-  function Server (document, operations) {
+export default class Server {
+  constructor (document, operations) {
     this.document = document;
     this.operations = operations || [];
     this.setDocumentMaxLength(null);
   }
 
-  Server.prototype.setDocumentMaxLength = function (maxLength) {
+  setDocumentMaxLength (maxLength) {
     this.documentMaxLength = maxLength;
   };
 
   // Call this method whenever you receive an operation from a client.
-  Server.prototype.receiveOperation = function (revision, operation) {
+  receiveOperation (revision, operation) {
     if (revision < 0 || this.operations.length < revision) {
       throw new Error("operation revision not in history");
     }
@@ -35,8 +27,8 @@ ot.Server = (function (global) {
     // ... and apply that on the document.
     var newDocument = operation.apply(this.document);
     // ignore if exceed the max length of document
-    if(typeof this.documentMaxLength === 'number' && 
-        newDocument.length > this.documentMaxLength && 
+    if(typeof this.documentMaxLength === 'number' &&
+        newDocument.length > this.documentMaxLength &&
         newDocument.length > this.document.length) {
       return;
     }
@@ -48,11 +40,4 @@ ot.Server = (function (global) {
     // clients and an acknowledgement to the creator.
     return operation;
   };
-
-  return Server;
-
-}(this));
-
-if (typeof module === 'object') {
-  module.exports = ot.Server;
 }
