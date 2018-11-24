@@ -8,11 +8,17 @@ export default class CodeMirror {
     this.changeInProgress = false;
     this.selectionChanged = false;
 
-    bind(this, 'onChanges');
-    bind(this, 'onChange');
-    bind(this, 'onCursorActivity');
-    bind(this, 'onFocus');
-    bind(this, 'onBlur');
+    // use addStyleRule
+    this.addedStyle = {};
+    this.styleElement = document.createElement('style');
+    document.documentElement.getElementsByTagName('head')[0].appendChild(styleElement);
+    this.styleSheet = this.styleElement.sheet;
+
+    this._bind(this, 'onChanges');
+    this._bind(this, 'onChange');
+    this._bind(this, 'onCursorActivity');
+    this._bind(this, 'onFocus');
+    this._bind(this, 'onBlur');
 
     cm.on('changes', this.onChanges);
     cm.on('change', this.onChange);
@@ -30,29 +36,11 @@ export default class CodeMirror {
     this.cm.off('blur', this.onBlur);
   };
 
-  function cmpPos (a, b) {
-    if (a.line < b.line) { return -1; }
-    if (a.line > b.line) { return 1; }
-    if (a.ch < b.ch)     { return -1; }
-    if (a.ch > b.ch)     { return 1; }
-    return 0;
-  }
-  function posEq (a, b) { return cmpPos(a, b) === 0; }
-  function posLe (a, b) { return cmpPos(a, b) <= 0; }
-
-  function minPos (a, b) { return posLe(a, b) ? a : b; }
-  function maxPos (a, b) { return posLe(a, b) ? b : a; }
-
-  function codemirrorDocLength (doc) {
-    return doc.indexFromPos({ line: doc.lastLine(), ch: 0 }) +
-      doc.getLine(doc.lastLine()).length;
-  }
-
   // Converts a CodeMirror change array (as obtained from the 'changes' event
   // in CodeMirror v4) or single change or linked list of changes (as returned
   // by the 'change' event in CodeMirror prior to version 4) into a
   // TextOperation and its inverse and returns them as a two-element array.
-  static operationFromCodeMirrorChanges = function (changes, doc) {
+  static operationFromCodeMirrorChanges = (changes, doc) => {
     // Approach: Replay the changes, beginning with the most recent one, and
     // construct the operation and its inverse. We have to convert the position
     // in the pre-change coordinate system to an index. We have a method to
@@ -64,7 +52,7 @@ export default class CodeMirror {
     // A disadvantage of this approach is its complexity `O(n^2)` in the length
     // of the linked list of changes.
 
-    var docEndLength = codemirrorDocLength(doc);
+    var docEndLength = this._codemirrorDocLength(doc);
     var operation    = new TextOperation().retain(docEndLength);
     var inverse      = new TextOperation().retain(docEndLength);
 
@@ -235,18 +223,24 @@ export default class CodeMirror {
     this.cm.setSelections(ranges);
   };
 
-  var addStyleRule = (function () {
-    var added = {};
-    var styleElement = document.createElement('style');
-    document.documentElement.getElementsByTagName('head')[0].appendChild(styleElement);
-    var styleSheet = styleElement.sheet;
+  addStyleRule () {
+    if (this.addedStyle[css]) { return; }
+    this.addedStyle[css] = true;
+    this.styleSheet.insertRule(css, (this.styleSheet.cssRules || this.styleSheet.rules).length);
+  }
 
-    return function (css) {
-      if (added[css]) { return; }
-      added[css] = true;
-      styleSheet.insertRule(css, (styleSheet.cssRules || styleSheet.rules).length);
-    };
-  }());
+  // var addStyleRule = (function () {
+  //   var added = {};
+  //   var styleElement = document.createElement('style');
+  //   document.documentElement.getElementsByTagName('head')[0].appendChild(styleElement);
+  //   var styleSheet = styleElement.sheet;
+
+  //   return function (css) {
+  //     if (added[css]) { return; }
+  //     added[css] = true;
+  //     styleSheet.insertRule(css, (styleSheet.cssRules || styleSheet.rules).length);
+  //   };
+  // }());
 
   setOtherCursor (position, color, clientId) {
     var cursorPos = this.cm.posFromIndex(position);
@@ -271,9 +265,10 @@ export default class CodeMirror {
     var match = /^#([0-9a-fA-F]{6})$/.exec(color);
     if (!match) { throw new Error("only six-digit hex colors are allowed."); }
     var selectionClassName = 'selection-' + match[1];
-    var rgbcolor = hex2rgb(color);
+    var rgbcolor = this._hex2rgb(color);
     var rule = '.' + selectionClassName + ' { background: rgba(' + rgbcolor.red + ',' + rgbcolor.green + ',' + rgbcolor.blue + ',0.2); }';
-    addStyleRule(rule);
+    // XXX: Right way? (by kaishuu0123)
+    this.addStyleRule(rule);
 
     var anchorPos = this.cm.posFromIndex(range.anchor);
     var headPos   = this.cm.posFromIndex(range.head);
@@ -326,7 +321,7 @@ export default class CodeMirror {
   };
 
   // Throws an error if the first argument is falsy. Useful for debugging.
-  function assert (b, msg) {
+  _assert (b, msg) {
     if (!b) {
       throw new Error(msg || "assertion error");
     }
@@ -335,14 +330,22 @@ export default class CodeMirror {
   // Bind a method to an object, so it doesn't matter whether you call
   // object.method() directly or pass object.method as a reference to another
   // function.
-  function bind (obj, method) {
+  _bind (obj, method) {
     var fn = obj[method];
     obj[method] = function () {
       fn.apply(obj, arguments);
     };
   }
 
-  function hex2rgb(hex) {
+  _cmpPos (a, b) {
+    if (a.line < b.line) { return -1; }
+    if (a.line > b.line) { return 1; }
+    if (a.ch < b.ch)     { return -1; }
+    if (a.ch > b.ch)     { return 1; }
+    return 0;
+  }
+
+  _hex2rgb(hex) {
     if (hex[0] === "#") { hex = hex.substr(1); }
     if (hex.length === 3) {
       var temp = hex;
@@ -357,11 +360,15 @@ export default class CodeMirror {
       blue: parseInt(triplets[2], 16)
     };
   }
+
+  _posEq (a, b) { return this._cmpPos(a, b) === 0; }
+  _posLe (a, b) { return this._cmpPos(a, b) <= 0; }
+
+  _minPos (a, b) { return this._posLe(a, b) ? a : b; }
+  _maxPos (a, b) { return this._posLe(a, b) ? b : a; }
+
+  _codemirrorDocLength (doc) {
+    return doc.indexFromPos({ line: doc.lastLine(), ch: 0 }) +
+      doc.getLine(doc.lastLine()).length;
+  }
 }
-
-ot.CodeMirrorAdapter = (function (global) {
-
-
-  return CodeMirrorAdapter;
-
-}(this));

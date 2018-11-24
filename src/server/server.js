@@ -1,4 +1,6 @@
-export default class Server {
+import EventEmitter from 'events';
+
+export default class Server extends EventEmitter {
   constructor (document, operations) {
     this.document = document;
     this.operations = operations || [];

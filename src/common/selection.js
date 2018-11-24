@@ -1,35 +1,28 @@
-if (typeof ot === 'undefined') {
-  // Export for browsers
-  var ot = {};
-}
+import TextOperation from './text-operation';
 
-ot.Selection = (function (global) {
-  'use strict';
-
-  var TextOperation = global.ot ? global.ot.TextOperation : require('./text-operation');
-
+class Range {
   // Range has `anchor` and `head` properties, which are zero-based indices into
   // the document. The `anchor` is the side of the selection that stays fixed,
   // `head` is the side of the selection where the cursor is. When both are
   // equal, the range represents a cursor.
-  function Range (anchor, head) {
+  constructor (anchor, head) {
     this.anchor = anchor;
     this.head = head;
   }
 
-  Range.fromJSON = function (obj) {
+  static fromJSON = function (obj) {
     return new Range(obj.anchor, obj.head);
   };
 
-  Range.prototype.equals = function (other) {
+  equals (other) {
     return this.anchor === other.anchor && this.head === other.head;
   };
 
-  Range.prototype.isEmpty = function () {
+  isEmpty () {
     return this.anchor === this.head;
   };
 
-  Range.prototype.transform = function (other) {
+  transform (other) {
     function transformIndex (index) {
       var newIndex = index;
       var ops = other.ops;
@@ -53,23 +46,25 @@ ot.Selection = (function (global) {
     }
     return new Range(newAnchor, transformIndex(this.head));
   };
+}
 
+export default class Selection {
   // A selection is basically an array of ranges. Every range represents a real
   // selection or a cursor in the document (when the start position equals the
   // end position of the range). The array must not be empty.
-  function Selection (ranges) {
+  constructor (ranges) {
     this.ranges = ranges || [];
   }
 
-  Selection.Range = Range;
+  static Range = Range;
 
   // Convenience method for creating selections only containing a single cursor
   // and no real selection range.
-  Selection.createCursor = function (position) {
+  static createCursor = function (position) {
     return new Selection([new Range(position, position)]);
   };
 
-  Selection.fromJSON = function (obj) {
+  static fromJSON = function (obj) {
     var objRanges = obj.ranges || obj;
     for (var i = 0, ranges = []; i < objRanges.length; i++) {
       ranges[i] = Range.fromJSON(objRanges[i]);
@@ -77,7 +72,7 @@ ot.Selection = (function (global) {
     return new Selection(ranges);
   };
 
-  Selection.prototype.equals = function (other) {
+  equals (other) {
     if (this.position !== other.position) { return false; }
     if (this.ranges.length !== other.ranges.length) { return false; }
     // FIXME: Sort ranges before comparing them?
@@ -87,7 +82,7 @@ ot.Selection = (function (global) {
     return true;
   };
 
-  Selection.prototype.somethingSelected = function () {
+  somethingSelected () {
     for (var i = 0; i < this.ranges.length; i++) {
       if (!this.ranges[i].isEmpty()) { return true; }
     }
@@ -95,23 +90,15 @@ ot.Selection = (function (global) {
   };
 
   // Return the more current selection information.
-  Selection.prototype.compose = function (other) {
+  compose (other) {
     return other;
   };
 
   // Update the selection with respect to an operation.
-  Selection.prototype.transform = function (other) {
+  transform (other) {
     for (var i = 0, newRanges = []; i < this.ranges.length; i++) {
       newRanges[i] = this.ranges[i].transform(other);
     }
     return new Selection(newRanges);
   };
-
-  return Selection;
-
-}(this));
-
-// Export for CommonJS
-if (typeof module === 'object') {
-  module.exports = ot.Selection;
 }

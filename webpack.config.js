@@ -11,6 +11,7 @@ module.exports = {
       {
         // 拡張子 .js の場合
         test: /\.js$/,
+        exclude: /node_modules/,
         use: [
           {
             // Babel を利用する
@@ -20,6 +21,9 @@ module.exports = {
               presets: [
                 // プリセットを指定することで、ES2018 を ES5 に変換
                 '@babel/preset-env',
+              ],
+              plugins: [
+                '@babel/plugin-proposal-class-properties'
               ]
             }
           }

@@ -1,13 +1,30 @@
-if (typeof ot === 'undefined') {
-  // Export for browsers
-  var ot = {};
-}
+// Operation are essentially lists of ops. There are three types of ops:
+//
+// * Retain ops: Advance the cursor position by a given number of characters.
+//   Represented by positive ints.
+// * Insert ops: Insert a given string at the current cursor position.
+//   Represented by strings.
+// * Delete ops: Delete the next n characters. Represented by negative ints.
 
-ot.TextOperation = (function () {
-  'use strict';
+const isRetain = (op) => {
+  return typeof op === 'number' && op > 0;
+};
+
+const isInsert = (op) => {
+  return typeof op === 'string';
+};
+
+const isDelete = (op) => {
+  return typeof op === 'number' && op < 0;
+};
+
+export default class TextOperation {
+  static isRetain = isRetain;
+  static isInsert = isInsert;
+  static isDelete = isDelete;
 
   // Constructor for new operations.
-  function TextOperation () {
+  constructor () {
     if (!this || this.constructor !== TextOperation) {
       // => function was called without 'new'
       return new TextOperation();
@@ -26,7 +43,7 @@ ot.TextOperation = (function () {
     this.targetLength = 0;
   }
 
-  TextOperation.prototype.equals = function (other) {
+  equals (other) {
     if (this.baseLength !== other.baseLength) { return false; }
     if (this.targetLength !== other.targetLength) { return false; }
     if (this.ops.length !== other.ops.length) { return false; }
@@ -36,33 +53,12 @@ ot.TextOperation = (function () {
     return true;
   };
 
-  // Operation are essentially lists of ops. There are three types of ops:
-  //
-  // * Retain ops: Advance the cursor position by a given number of characters.
-  //   Represented by positive ints.
-  // * Insert ops: Insert a given string at the current cursor position.
-  //   Represented by strings.
-  // * Delete ops: Delete the next n characters. Represented by negative ints.
-
-  var isRetain = TextOperation.isRetain = function (op) {
-    return typeof op === 'number' && op > 0;
-  };
-
-  var isInsert = TextOperation.isInsert = function (op) {
-    return typeof op === 'string';
-  };
-
-  var isDelete = TextOperation.isDelete = function (op) {
-    return typeof op === 'number' && op < 0;
-  };
-
-
   // After an operation is constructed, the user of the library can specify the
   // actions of an operation (skip/insert/delete) with these three builder
   // methods. They all return the operation for convenient chaining.
 
   // Skip over a given number of characters.
-  TextOperation.prototype.retain = function (n) {
+  retain (n) {
     if (typeof n !== 'number') {
       throw new Error("retain expects an integer");
     }
@@ -80,7 +76,7 @@ ot.TextOperation = (function () {
   };
 
   // Insert a string at the current position.
-  TextOperation.prototype.insert = function (str) {
+  insert (str) {
     if (typeof str !== 'string') {
       throw new Error("insert expects a string");
     }
@@ -109,7 +105,7 @@ ot.TextOperation = (function () {
   };
 
   // Delete a string at the current position.
-  TextOperation.prototype['delete'] = function (n) {
+  delete (n) {
     if (typeof n === 'string') { n = n.length; }
     if (typeof n !== 'number') {
       throw new Error("delete expects an integer or a string");
@@ -126,12 +122,12 @@ ot.TextOperation = (function () {
   };
 
   // Tests whether this operation has no effect.
-  TextOperation.prototype.isNoop = function () {
+  isNoop () {
     return this.ops.length === 0 || (this.ops.length === 1 && isRetain(this.ops[0]));
   };
 
   // Pretty printing.
-  TextOperation.prototype.toString = function () {
+  toString () {
     // map: build a new array by applying a function to every element in an old
     // array.
     var map = Array.prototype.map || function (fn) {
@@ -154,12 +150,12 @@ ot.TextOperation = (function () {
   };
 
   // Converts operation into a JSON value.
-  TextOperation.prototype.toJSON = function () {
+  toJSON () {
     return this.ops;
   };
 
   // Converts a plain JS object into an operation and validates it.
-  TextOperation.fromJSON = function (ops) {
+  static fromJSON = (ops) => {
     var o = new TextOperation();
     for (var i = 0, l = ops.length; i < l; i++) {
       var op = ops[i];
@@ -178,7 +174,7 @@ ot.TextOperation = (function () {
 
   // Apply an operation to a string, returning a new string. Throws an error if
   // there's a mismatch between the input string and the operation.
-  TextOperation.prototype.apply = function (str) {
+  apply (str) {
     var operation = this;
     if (str.length !== operation.baseLength) {
       throw new Error("The operation's base length must be equal to the string's length.");
@@ -212,7 +208,7 @@ ot.TextOperation = (function () {
   // operation that reverts the effects of the operation, e.g. when you have an
   // operation 'insert("hello "); skip(6);' then the inverse is 'delete("hello ");
   // skip(6);'. The inverse should be used for implementing undo.
-  TextOperation.prototype.invert = function (str) {
+  invert (str) {
     var strIndex = 0;
     var inverse = new TextOperation();
     var ops = this.ops;
@@ -235,7 +231,7 @@ ot.TextOperation = (function () {
   // preserves the changes of both. Or, in other words, for each input string S
   // and a pair of consecutive operations A and B,
   // apply(apply(S, A), B) = apply(S, compose(A, B)) must hold.
-  TextOperation.prototype.compose = function (operation2) {
+  compose (operation2) {
     var operation1 = this;
     if (operation1.targetLength !== operation2.baseLength) {
       throw new Error("The base length of the second operation has to be the target length of the first operation");
@@ -334,7 +330,7 @@ ot.TextOperation = (function () {
     return operation;
   };
 
-  function getSimpleOp (operation, fn) {
+  _getSimpleOp (operation, fn) {
     var ops = operation.ops;
     var isRetain = TextOperation.isRetain;
     switch (ops.length) {
@@ -348,7 +344,7 @@ ot.TextOperation = (function () {
     return null;
   }
 
-  function getStartIndex (operation) {
+  _getStartIndex (operation) {
     if (isRetain(operation.ops[0])) { return operation.ops[0]; }
     return 0;
   }
@@ -361,11 +357,11 @@ ot.TextOperation = (function () {
   // returns true if the operations are consecutive insert operations or both
   // operations delete text at the same position. You may want to include other
   // factors like the time since the last change in your decision.
-  TextOperation.prototype.shouldBeComposedWith = function (other) {
+  shouldBeComposedWith (other) {
     if (this.isNoop() || other.isNoop()) { return true; }
 
-    var startA = getStartIndex(this), startB = getStartIndex(other);
-    var simpleA = getSimpleOp(this), simpleB = getSimpleOp(other);
+    var startA = this._getStartIndex(this), startB = this._getStartIndex(other);
+    var simpleA = this._getSimpleOp(this), simpleB = this._getSimpleOp(other);
     if (!simpleA || !simpleB) { return false; }
 
     if (isInsert(simpleA) && isInsert(simpleB)) {
@@ -384,11 +380,11 @@ ot.TextOperation = (function () {
   // Decides whether two operations should be composed with each other
   // if they were inverted, that is
   // `shouldBeComposedWith(a, b) = shouldBeComposedWithInverted(b^{-1}, a^{-1})`.
-  TextOperation.prototype.shouldBeComposedWithInverted = function (other) {
+  shouldBeComposedWithInverted (other) {
     if (this.isNoop() || other.isNoop()) { return true; }
 
-    var startA = getStartIndex(this), startB = getStartIndex(other);
-    var simpleA = getSimpleOp(this), simpleB = getSimpleOp(other);
+    var startA = this._getStartIndex(this), startB = this._getStartIndex(other);
+    var simpleA = this._getSimpleOp(this), simpleB = this._getSimpleOp(other);
     if (!simpleA || !simpleB) { return false; }
 
     if (isInsert(simpleA) && isInsert(simpleB)) {
@@ -406,7 +402,7 @@ ot.TextOperation = (function () {
   // produces two operations A' and B' (in an array) such that
   // `apply(apply(S, A), B') = apply(apply(S, B), A')`. This function is the
   // heart of OT.
-  TextOperation.transform = function (operation1, operation2) {
+  static transform = (operation1, operation2) => {
     if (operation1.baseLength !== operation2.baseLength) {
       throw new Error("Both operations have to have the same base length");
     }
@@ -519,12 +515,4 @@ ot.TextOperation = (function () {
 
     return [operation1prime, operation2prime];
   };
-
-  return TextOperation;
-
-}());
-
-// Export for CommonJS
-if (typeof module === 'object') {
-  module.exports = ot.TextOperation;
 }
