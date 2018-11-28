@@ -1,91 +1,69 @@
-if (typeof ot === 'undefined') {
-  // Export for browsers
-  var ot = {};
-}
+import TextOperation from 'common/text-operation';
 
-ot.SimpleTextOperation = (function (global) {
-
-  var TextOperation = global.ot ? global.ot.TextOperation : require('./text-operation');
-
-  function SimpleTextOperation () {}
-
-
-  // Insert the string `str` at the zero-based `position` in the document.
-  function Insert (str, position) {
-    if (!this || this.constructor !== SimpleTextOperation) {
-      // => function was called without 'new'
-      return new Insert(str, position);
-    }
-    this.str = str;
-    this.position = position;
-  }
-
-  Insert.prototype = new SimpleTextOperation();
-  SimpleTextOperation.Insert = Insert;
-
-  Insert.prototype.toString = function () {
-    return 'Insert(' + JSON.stringify(this.str) + ', ' + this.position + ')';
-  };
-
-  Insert.prototype.equals = function (other) {
-    return other instanceof Insert &&
-      this.str === other.str &&
-      this.position === other.position;
-  };
-
-  Insert.prototype.apply = function (doc) {
-    return doc.slice(0, this.position) + this.str + doc.slice(this.position);
-  };
-
-
+class Delete {
   // Delete `count` many characters at the zero-based `position` in the document.
-  function Delete (count, position) {
-    if (!this || this.constructor !== SimpleTextOperation) {
-      return new Delete(count, position);
-    }
+  constructor (count, position) {
     this.count = count;
     this.position = position;
   }
 
-  Delete.prototype = new SimpleTextOperation();
-  SimpleTextOperation.Delete = Delete;
-
-  Delete.prototype.toString = function () {
+  toString () {
     return 'Delete(' + this.count + ', ' + this.position + ')';
   };
 
-  Delete.prototype.equals = function (other) {
+  equals (other) {
     return other instanceof Delete &&
       this.count === other.count &&
       this.position === other.position;
   };
 
-  Delete.prototype.apply = function (doc) {
+  apply (doc) {
     return doc.slice(0, this.position) + doc.slice(this.position + this.count);
   };
+}
 
-
-  // An operation that does nothing. This is needed for the result of the
-  // transformation of two deletions of the same character.
-  function Noop () {
-    if (!this || this.constructor !== SimpleTextOperation) { return new Noop(); }
+class Insert {
+  // Insert the string `str` at the zero-based `position` in the document.
+  constructor (str, position) {
+    this.str = str;
+    this.position = position;
   }
 
-  Noop.prototype = new SimpleTextOperation();
-  SimpleTextOperation.Noop = Noop;
+  toString () {
+    return 'Insert(' + JSON.stringify(this.str) + ', ' + this.position + ')';
+  };
 
-  Noop.prototype.toString = function () {
+  equals (other) {
+    return other instanceof Insert &&
+      this.str === other.str &&
+      this.position === other.position;
+  };
+
+  apply (doc) {
+    return doc.slice(0, this.position) + this.str + doc.slice(this.position);
+  };
+}
+
+// An operation that does nothing. This is needed for the result of the
+// transformation of two deletions of the same character.
+class Noop {
+  toString () {
     return 'Noop()';
   };
 
-  Noop.prototype.equals = function (other) { return other instanceof Noop; };
+  equals (other) { return other instanceof Noop; };
 
-  Noop.prototype.apply = function (doc) { return doc; };
+  apply (doc) { return doc; };
+}
 
-  var noop = new Noop();
+const noop = new Noop();
 
+export default class SimpleTextOperation {
+  static Insert = Insert;
+  static Delete = Delete;
+  static Noop = Noop;
 
-  SimpleTextOperation.transform = function (a, b) {
+  static transform = (a, b) => {
     if (a instanceof Noop || b instanceof Noop) { return [a, b]; }
 
     if (a instanceof Insert && b instanceof Insert) {
@@ -161,7 +139,7 @@ ot.SimpleTextOperation = (function (global) {
 
   // Convert a normal, composable `TextOperation` into an array of
   // `SimpleTextOperation`s.
-  SimpleTextOperation.fromTextOperation = function (operation) {
+  static fromTextOperation = (operation) => {
     var simpleOperations = [];
     var index = 0;
     for (var i = 0; i < operation.ops.length; i++) {
@@ -177,12 +155,4 @@ ot.SimpleTextOperation = (function (global) {
     }
     return simpleOperations;
   };
-
-
-  return SimpleTextOperation;
-})(this);
-
-// Export for CommonJS
-if (typeof module === 'object') {
-  module.exports = ot.SimpleTextOperation;
 }

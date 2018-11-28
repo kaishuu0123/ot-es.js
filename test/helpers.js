@@ -1,8 +1,6 @@
+import TextOperation from 'common/text-operation';
+
 (function (exports) {
-
-  var TextOperation = typeof exports.ot === 'object' ? exports.ot.TextOperation
-    : require('../lib/text-operation');
-
   function randomInt (n) {
     return Math.floor(Math.random() * n);
   }

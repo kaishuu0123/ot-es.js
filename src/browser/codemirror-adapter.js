@@ -1,22 +1,24 @@
-/*global ot */
+import TextOperation from 'common/text-operation';
+import Selection from 'common/selection';
 
-ot.CodeMirrorAdapter = (function (global) {
-  'use strict';
-
-  var TextOperation = ot.TextOperation;
-  var Selection = ot.Selection;
-
-  function CodeMirrorAdapter (cm) {
+export default class CodeMirror {
+  constructor(cm) {
     this.cm = cm;
     this.ignoreNextChange = false;
     this.changeInProgress = false;
     this.selectionChanged = false;
 
-    bind(this, 'onChanges');
-    bind(this, 'onChange');
-    bind(this, 'onCursorActivity');
-    bind(this, 'onFocus');
-    bind(this, 'onBlur');
+    // use addStyleRule
+    this.addedStyle = {};
+    this.styleElement = document.createElement('style');
+    document.documentElement.getElementsByTagName('head')[0].appendChild(styleElement);
+    this.styleSheet = this.styleElement.sheet;
+
+    this._bind(this, 'onChanges');
+    this._bind(this, 'onChange');
+    this._bind(this, 'onCursorActivity');
+    this._bind(this, 'onFocus');
+    this._bind(this, 'onBlur');
 
     cm.on('changes', this.onChanges);
     cm.on('change', this.onChange);
@@ -26,7 +28,7 @@ ot.CodeMirrorAdapter = (function (global) {
   }
 
   // Removes all event listeners from the CodeMirror instance.
-  CodeMirrorAdapter.prototype.detach = function () {
+  detach () {
     this.cm.off('changes', this.onChanges);
     this.cm.off('change', this.onChange);
     this.cm.off('cursorActivity', this.onCursorActivity);
@@ -34,29 +36,11 @@ ot.CodeMirrorAdapter = (function (global) {
     this.cm.off('blur', this.onBlur);
   };
 
-  function cmpPos (a, b) {
-    if (a.line < b.line) { return -1; }
-    if (a.line > b.line) { return 1; }
-    if (a.ch < b.ch)     { return -1; }
-    if (a.ch > b.ch)     { return 1; }
-    return 0;
-  }
-  function posEq (a, b) { return cmpPos(a, b) === 0; }
-  function posLe (a, b) { return cmpPos(a, b) <= 0; }
-
-  function minPos (a, b) { return posLe(a, b) ? a : b; }
-  function maxPos (a, b) { return posLe(a, b) ? b : a; }
-
-  function codemirrorDocLength (doc) {
-    return doc.indexFromPos({ line: doc.lastLine(), ch: 0 }) +
-      doc.getLine(doc.lastLine()).length;
-  }
-
   // Converts a CodeMirror change array (as obtained from the 'changes' event
   // in CodeMirror v4) or single change or linked list of changes (as returned
   // by the 'change' event in CodeMirror prior to version 4) into a
   // TextOperation and its inverse and returns them as a two-element array.
-  CodeMirrorAdapter.operationFromCodeMirrorChanges = function (changes, doc) {
+  static operationFromCodeMirrorChanges = (changes, doc) => {
     // Approach: Replay the changes, beginning with the most recent one, and
     // construct the operation and its inverse. We have to convert the position
     // in the pre-change coordinate system to an index. We have a method to
@@ -68,7 +52,7 @@ ot.CodeMirrorAdapter = (function (global) {
     // A disadvantage of this approach is its complexity `O(n^2)` in the length
     // of the linked list of changes.
 
-    var docEndLength = codemirrorDocLength(doc);
+    var docEndLength = this._codemirrorDocLength(doc);
     var operation    = new TextOperation().retain(docEndLength);
     var inverse      = new TextOperation().retain(docEndLength);
 
@@ -135,11 +119,11 @@ ot.CodeMirrorAdapter = (function (global) {
   };
 
   // Singular form for backwards compatibility.
-  CodeMirrorAdapter.operationFromCodeMirrorChange =
-    CodeMirrorAdapter.operationFromCodeMirrorChanges;
+  static operationFromCodeMirrorChange =
+    operationFromCodeMirrorChanges;
 
   // Apply an operation to a CodeMirror instance.
-  CodeMirrorAdapter.applyOperationToCodeMirror = function (operation, cm) {
+  static applyOperationToCodeMirror = function (operation, cm) {
     cm.operation(function () {
       var ops = operation.ops;
       var index = 0; // holds the current index into CodeMirror's content
@@ -164,11 +148,11 @@ ot.CodeMirrorAdapter = (function (global) {
     });
   };
 
-  CodeMirrorAdapter.prototype.registerCallbacks = function (cb) {
+  registerCallbacks (cb) {
     this.callbacks = cb;
   };
 
-  CodeMirrorAdapter.prototype.onChange = function () {
+  onChange () {
     // By default, CodeMirror's event order is the following:
     // 1. 'change', 2. 'cursorActivity', 3. 'changes'.
     // We want to fire the 'selectionChange' event after the 'change' event,
@@ -178,7 +162,7 @@ ot.CodeMirrorAdapter = (function (global) {
     this.changeInProgress = true;
   };
 
-  CodeMirrorAdapter.prototype.onChanges = function (_, changes) {
+  onChanges (_, changes) {
     if (!this.ignoreNextChange) {
       var pair = CodeMirrorAdapter.operationFromCodeMirrorChanges(changes, this.cm);
       this.trigger('change', pair[0], pair[1]);
@@ -188,8 +172,7 @@ ot.CodeMirrorAdapter = (function (global) {
     this.ignoreNextChange = false;
   };
 
-  CodeMirrorAdapter.prototype.onCursorActivity =
-  CodeMirrorAdapter.prototype.onFocus = function () {
+  onFocus () {
     if (this.changeInProgress) {
       this.selectionChanged = true;
     } else {
@@ -197,15 +180,23 @@ ot.CodeMirrorAdapter = (function (global) {
     }
   };
 
-  CodeMirrorAdapter.prototype.onBlur = function () {
+  onCursorActivity () {
+    if (this.changeInProgress) {
+      this.selectionChanged = true;
+    } else {
+      this.trigger('selectionChange');
+    }
+  }
+
+  onBlur () {
     if (!this.cm.somethingSelected()) { this.trigger('blur'); }
   };
 
-  CodeMirrorAdapter.prototype.getValue = function () {
+  getValue () {
     return this.cm.getValue();
   };
 
-  CodeMirrorAdapter.prototype.getSelection = function () {
+  getSelection () {
     var cm = this.cm;
 
     var selectionList = cm.listSelections();
@@ -220,7 +211,7 @@ ot.CodeMirrorAdapter = (function (global) {
     return new Selection(ranges);
   };
 
-  CodeMirrorAdapter.prototype.setSelection = function (selection) {
+  setSelection (selection) {
     var ranges = [];
     for (var i = 0; selection && i < selection.ranges.length; i++) {
       var range = selection.ranges[i];
@@ -232,20 +223,26 @@ ot.CodeMirrorAdapter = (function (global) {
     this.cm.setSelections(ranges);
   };
 
-  var addStyleRule = (function () {
-    var added = {};
-    var styleElement = document.createElement('style');
-    document.documentElement.getElementsByTagName('head')[0].appendChild(styleElement);
-    var styleSheet = styleElement.sheet;
+  addStyleRule () {
+    if (this.addedStyle[css]) { return; }
+    this.addedStyle[css] = true;
+    this.styleSheet.insertRule(css, (this.styleSheet.cssRules || this.styleSheet.rules).length);
+  }
 
-    return function (css) {
-      if (added[css]) { return; }
-      added[css] = true;
-      styleSheet.insertRule(css, (styleSheet.cssRules || styleSheet.rules).length);
-    };
-  }());
+  // var addStyleRule = (function () {
+  //   var added = {};
+  //   var styleElement = document.createElement('style');
+  //   document.documentElement.getElementsByTagName('head')[0].appendChild(styleElement);
+  //   var styleSheet = styleElement.sheet;
 
-  CodeMirrorAdapter.prototype.setOtherCursor = function (position, color, clientId) {
+  //   return function (css) {
+  //     if (added[css]) { return; }
+  //     added[css] = true;
+  //     styleSheet.insertRule(css, (styleSheet.cssRules || styleSheet.rules).length);
+  //   };
+  // }());
+
+  setOtherCursor (position, color, clientId) {
     var cursorPos = this.cm.posFromIndex(position);
     var cursorCoords = this.cm.cursorCoords(cursorPos);
     var cursorEl = document.createElement('span');
@@ -264,13 +261,14 @@ ot.CodeMirrorAdapter = (function (global) {
     return this.cm.setBookmark(cursorPos, { widget: cursorEl, insertLeft: true });
   };
 
-  CodeMirrorAdapter.prototype.setOtherSelectionRange = function (range, color, clientId) {
+  setOtherSelectionRange (range, color, clientId) {
     var match = /^#([0-9a-fA-F]{6})$/.exec(color);
     if (!match) { throw new Error("only six-digit hex colors are allowed."); }
     var selectionClassName = 'selection-' + match[1];
-    var rgbcolor = hex2rgb(color);
+    var rgbcolor = this._hex2rgb(color);
     var rule = '.' + selectionClassName + ' { background: rgba(' + rgbcolor.red + ',' + rgbcolor.green + ',' + rgbcolor.blue + ',0.2); }';
-    addStyleRule(rule);
+    // XXX: Right way? (by kaishuu0123)
+    this.addStyleRule(rule);
 
     var anchorPos = this.cm.posFromIndex(range.anchor);
     var headPos   = this.cm.posFromIndex(range.head);
@@ -282,7 +280,7 @@ ot.CodeMirrorAdapter = (function (global) {
     );
   };
 
-  CodeMirrorAdapter.prototype.setOtherSelection = function (selection, color, clientId) {
+  setOtherSelection (selection, color, clientId) {
     var selectionObjects = [];
     for (var i = 0; i < selection.ranges.length; i++) {
       var range = selection.ranges[i];
@@ -301,29 +299,29 @@ ot.CodeMirrorAdapter = (function (global) {
     };
   };
 
-  CodeMirrorAdapter.prototype.trigger = function (event) {
+  trigger (event) {
     var args = Array.prototype.slice.call(arguments, 1);
     var action = this.callbacks && this.callbacks[event];
     if (action) { action.apply(this, args); }
   };
 
-  CodeMirrorAdapter.prototype.applyOperation = function (operation) {
+  applyOperation (operation) {
     if (!operation.isNoop()) {
       this.ignoreNextChange = true;
     }
     CodeMirrorAdapter.applyOperationToCodeMirror(operation, this.cm);
   };
 
-  CodeMirrorAdapter.prototype.registerUndo = function (undoFn) {
+  registerUndo (undoFn) {
     this.cm.undo = undoFn;
   };
 
-  CodeMirrorAdapter.prototype.registerRedo = function (redoFn) {
+  registerRedo (redoFn) {
     this.cm.redo = redoFn;
   };
 
   // Throws an error if the first argument is falsy. Useful for debugging.
-  function assert (b, msg) {
+  _assert (b, msg) {
     if (!b) {
       throw new Error(msg || "assertion error");
     }
@@ -332,14 +330,22 @@ ot.CodeMirrorAdapter = (function (global) {
   // Bind a method to an object, so it doesn't matter whether you call
   // object.method() directly or pass object.method as a reference to another
   // function.
-  function bind (obj, method) {
+  _bind (obj, method) {
     var fn = obj[method];
     obj[method] = function () {
       fn.apply(obj, arguments);
     };
   }
 
-  function hex2rgb(hex) {
+  _cmpPos (a, b) {
+    if (a.line < b.line) { return -1; }
+    if (a.line > b.line) { return 1; }
+    if (a.ch < b.ch)     { return -1; }
+    if (a.ch > b.ch)     { return 1; }
+    return 0;
+  }
+
+  _hex2rgb(hex) {
     if (hex[0] === "#") { hex = hex.substr(1); }
     if (hex.length === 3) {
       var temp = hex;
@@ -355,6 +361,14 @@ ot.CodeMirrorAdapter = (function (global) {
     };
   }
 
-  return CodeMirrorAdapter;
+  _posEq (a, b) { return this._cmpPos(a, b) === 0; }
+  _posLe (a, b) { return this._cmpPos(a, b) <= 0; }
 
-}(this));
+  _minPos (a, b) { return this._posLe(a, b) ? a : b; }
+  _maxPos (a, b) { return this._posLe(a, b) ? b : a; }
+
+  _codemirrorDocLength (doc) {
+    return doc.indexFromPos({ line: doc.lastLine(), ch: 0 }) +
+      doc.getLine(doc.lastLine()).length;
+  }
+}

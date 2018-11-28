@@ -17,18 +17,30 @@
   "main": "./lib/index.js",
   "dependencies": {},
   "devDependencies": {
-    "socket.io": "1.2.1",
+    "@babel/core": "^7.1.6",
+    "@babel/plugin-proposal-class-properties": "^7.1.0",
+    "@babel/preset-env": "^7.1.6",
+    "babel-core": "^7.0.0-bridge.0",
+    "babel-jest": "^23.6.0",
+    "babel-loader": "^8.0.4",
+    "babel-plugin-transform-export-default": "^7.0.0-alpha.20",
     "grunt": "*",
-    "grunt-contrib-jshint": "*",
-    "grunt-contrib-qunit": "*",
-    "grunt-contrib-nodeunit": "*",
-    "grunt-contrib-watch": "*",
-    "grunt-contrib-uglify": "*",
     "grunt-contrib-concat": "*",
-    "grunt-contrib-connect": "*"
+    "grunt-contrib-connect": "*",
+    "grunt-contrib-jshint": "*",
+    "grunt-contrib-nodeunit": "*",
+    "grunt-contrib-qunit": "*",
+    "grunt-contrib-uglify": "*",
+    "grunt-contrib-watch": "*",
+    "jest": "^23.6.0",
+    "regenerator-runtime": "^0.13.1",
+    "socket.io": "1.2.1",
+    "webpack": "^4.25.1",
+    "webpack-cli": "^3.1.2"
   },
   "scripts": {
-    "test": "grunt jshint nodeunit qunit"
+    "test": "jest",
+    "build": "webpack --mode development"
   },
   "licenses": [
     {

@@ -1,9 +1,5 @@
-/*global ot, $ */
-
-ot.AjaxAdapter = (function () {
-  'use strict';
-
-  function AjaxAdapter (path, ownUserName, revision) {
+export default class AjaxAdapter {
+  constructor(path, ownUserName, revision) {
     if (path[path.length - 1] !== '/') { path += '/'; }
     this.path = path;
     this.ownUserName = ownUserName;
@@ -12,11 +8,11 @@ ot.AjaxAdapter = (function () {
     this.poll();
   }
 
-  AjaxAdapter.prototype.renderRevisionPath = function () {
+  renderRevisionPath () {
     return 'revision/' + this.majorRevision + '-' + this.minorRevision;
   };
 
-  AjaxAdapter.prototype.handleResponse = function (data) {
+  handleResponse (data) {
     var i;
     var operations = data.operations;
     for (i = 0; i < operations.length; i++) {
@@ -57,7 +53,7 @@ ot.AjaxAdapter = (function () {
     }
   };
 
-  AjaxAdapter.prototype.poll = function () {
+  poll () {
     var self = this;
     $.ajax({
       url: this.path + this.renderRevisionPath(),
@@ -74,7 +70,7 @@ ot.AjaxAdapter = (function () {
     });
   };
 
-  AjaxAdapter.prototype.sendOperation = function (revision, operation, selection) {
+  sendOperation (revision, operation, selection) {
     if (revision !== this.majorRevision) { throw new Error("Revision numbers out of sync"); }
     var self = this;
     $.ajax({
@@ -90,7 +86,7 @@ ot.AjaxAdapter = (function () {
     });
   };
 
-  AjaxAdapter.prototype.sendSelection = function (obj) {
+  sendSelection (obj) {
     $.ajax({
       url: this.path + this.renderRevisionPath() + '/selection',
       type: 'POST',
@@ -101,16 +97,13 @@ ot.AjaxAdapter = (function () {
     });
   };
 
-  AjaxAdapter.prototype.registerCallbacks = function (cb) {
+  registerCallbacks (cb) {
     this.callbacks = cb;
   };
 
-  AjaxAdapter.prototype.trigger = function (event) {
+  trigger (event) {
     var args = Array.prototype.slice.call(arguments, 1);
     var action = this.callbacks && this.callbacks[event];
     if (action) { action.apply(this, args); }
   };
-
-  return AjaxAdapter;
-
-})();
+}

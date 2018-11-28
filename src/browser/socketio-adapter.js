@@ -1,9 +1,5 @@
-/*global ot */
-
-ot.SocketIOAdapter = (function () {
-  'use strict';
-
-  function SocketIOAdapter (socket) {
+export default class SocketIOAdapter {
+  constructor (socket) {
     this.socket = socket;
 
     var self = this;
@@ -35,28 +31,25 @@ ot.SocketIOAdapter = (function () {
       });
   }
 
-  SocketIOAdapter.prototype.sendOperation = function (revision, operation, selection) {
+  sendOperation (revision, operation, selection) {
     this.socket.emit('operation', revision, operation, selection);
   };
 
-  SocketIOAdapter.prototype.sendSelection = function (selection) {
+  sendSelection (selection) {
     this.socket.emit('selection', selection);
   };
 
-  SocketIOAdapter.prototype.getOperations = function (base, head) {
+  getOperations (base, head) {
     this.socket.emit('get_operations', base, head);
   };
 
-  SocketIOAdapter.prototype.registerCallbacks = function (cb) {
+  registerCallbacks (cb) {
     this.callbacks = cb;
   };
 
-  SocketIOAdapter.prototype.trigger = function (event) {
+  trigger (event) {
     var args = Array.prototype.slice.call(arguments, 1);
     var action = this.callbacks && this.callbacks[event];
     if (action) { action.apply(this, args); }
   };
-
-  return SocketIOAdapter;
-
-}());
+}
