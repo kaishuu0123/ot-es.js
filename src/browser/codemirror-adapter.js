@@ -1,5 +1,5 @@
-import TextOperation from '../common/text-operation';
-import Selection from '../common/selection';
+import TextOperation from 'common/text-operation';
+import Selection from 'common/selection';
 
 export default class CodeMirror {
   constructor(cm) {

@@ -1,9 +1,9 @@
 'use strict';
 
-var TextOperation    = require('../common/text-operation');
-var WrappedOperation = require('../common/wrapped-operation');
-var Selection        = require('../common/selection');
-var Server           = require('./server');
+var TextOperation    = require('common/text-operation');
+var WrappedOperation = require('common/wrapped-operation');
+var Selection        = require('common/selection');
+var Server           = require('server/server');
 var util             = require('util');
 
 function DummyLogger () {

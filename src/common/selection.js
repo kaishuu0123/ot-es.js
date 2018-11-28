@@ -1,4 +1,4 @@
-import TextOperation from './text-operation';
+import TextOperation from 'common/text-operation';
 
 class Range {
   // Range has `anchor` and `head` properties, which are zero-based indices into

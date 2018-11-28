@@ -1,11 +1,8 @@
-import TextOperation from './text-operation';
+import TextOperation from 'common/text-operation';
 
 class Delete {
   // Delete `count` many characters at the zero-based `position` in the document.
   constructor (count, position) {
-    if (!this || this.constructor !== SimpleTextOperation) {
-      return new Delete(count, position);
-    }
     this.count = count;
     this.position = position;
   }
@@ -28,10 +25,6 @@ class Delete {
 class Insert {
   // Insert the string `str` at the zero-based `position` in the document.
   constructor (str, position) {
-    if (!this || this.constructor !== SimpleTextOperation) {
-      // => function was called without 'new'
-      return new Insert(str, position);
-    }
     this.str = str;
     this.position = position;
   }

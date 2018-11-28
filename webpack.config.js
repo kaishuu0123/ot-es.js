@@ -1,3 +1,5 @@
+const path = require('path');
+
 module.exports = {
   // モード値を production に設定すると最適化された状態で、
   // development に設定するとソースマップ有効でJSファイルが出力される
@@ -15,20 +17,16 @@ module.exports = {
         use: [
           {
             // Babel を利用する
-            loader: 'babel-loader',
-            // Babel のオプションを指定する
-            options: {
-              presets: [
-                // プリセットを指定することで、ES2018 を ES5 に変換
-                '@babel/preset-env',
-              ],
-              plugins: [
-                '@babel/plugin-proposal-class-properties'
-              ]
-            }
+            loader: 'babel-loader'
           }
         ]
       }
+    ]
+  },
+  resolve: {
+    modules: [
+      path.resolve(__dirname, 'src'),
+      'node_modules'
     ]
   }
 };

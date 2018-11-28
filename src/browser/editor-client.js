@@ -1,8 +1,8 @@
-import Client from './client';
-import Selection from '../common/selection';
-import UndoManager from './undo-manager';
-import TextOperation from '../common/text-operation';
-import WrappedOperation from '../common/wrapped-operation';
+import Client from 'browser/client';
+import Selection from 'common/selection';
+import UndoManager from 'browser/undo-manager';
+import TextOperation from 'common/text-operation';
+import WrappedOperation from 'common/wrapped-operation';
 
 class OtherClient {
   constructor (id, listEl, editorAdapter, name, color, selection) {
