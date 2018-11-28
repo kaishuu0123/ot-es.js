@@ -45,21 +45,21 @@ export default class WrappedOperation {
     );
   };
 
-  _transformMeta (meta, operation) {
-    if (meta && typeof meta === 'object') {
-      if (typeof meta.transform === 'function') {
-        return meta.transform(operation);
-      }
-    }
-    return meta;
-  }
-
   static transform = (a, b) => {
+    let _transformMeta = (meta, operation) => {
+      if (meta && typeof meta === 'object') {
+        if (typeof meta.transform === 'function') {
+          return meta.transform(operation);
+        }
+      }
+      return meta;
+    }
+
     var transform = a.wrapped.constructor.transform;
     var pair = transform(a.wrapped, b.wrapped);
     return [
-      new WrappedOperation(pair[0], this._transformMeta(a.meta, b.wrapped)),
-      new WrappedOperation(pair[1], this._transformMeta(b.meta, a.wrapped))
+      new WrappedOperation(pair[0], _transformMeta(a.meta, b.wrapped)),
+      new WrappedOperation(pair[1], _transformMeta(b.meta, a.wrapped))
     ];
   };
 }

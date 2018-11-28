@@ -2,6 +2,8 @@ import EventEmitter from 'events';
 
 export default class Server extends EventEmitter {
   constructor (document, operations) {
+    super();
+
     this.document = document;
     this.operations = operations || [];
     this.setDocumentMaxLength(null);

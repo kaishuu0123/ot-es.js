@@ -1,3 +1,90 @@
+class AwaitingConfirm {
+  // In the 'AwaitingConfirm' state, there's one operation the client has sent
+  // to the server and is still waiting for an acknowledgement.
+  constructor (outstanding) {
+    // Save the pending operation
+    this.outstanding = outstanding;
+  }
+
+  applyClient (client, operation) {
+    // When the user makes an edit, don't send the operation immediately,
+    // instead switch to 'AwaitingWithBuffer' state
+    return new AwaitingWithBuffer(this.outstanding, operation);
+  };
+
+  applyServer (client, revision, operation) {
+    if (revision - client.revision > 1) {
+      throw new Error("Invalid revision.");
+    }
+    client.revision = revision;
+    // This is another client's operation. Visualization:
+    //
+    //                   /\
+    // this.outstanding /  \ operation
+    //                 /    \
+    //                 \    /
+    //  pair[1]         \  / pair[0] (new outstanding)
+    //  (can be applied  \/
+    //  to the client's
+    //  current document)
+    var pair = operation.constructor.transform(this.outstanding, operation);
+    client.applyOperation(pair[1]);
+    return new AwaitingConfirm(pair[0]);
+  };
+
+  serverAck (client, revision) {
+    if (revision - client.revision > 1) {
+      return new Stale(this.outstanding, client, revision).getOperations();
+    }
+    client.revision = revision;
+    // The client's operation has been acknowledged
+    // => switch to synchronized state
+    return synchronized_;
+  };
+
+  transformSelection (selection) {
+    return selection.transform(this.outstanding);
+  };
+
+  resend (client) {
+    // The confirm didn't come because the client was disconnected.
+    // Now that it has reconnected, we resend the outstanding operation.
+    client.sendOperation(client.revision, this.outstanding);
+  };
+}
+
+class Synchronized {
+  applyClient (client, operation) {
+    // When the user makes an edit, send the operation to the server and
+    // switch to the 'AwaitingConfirm' state
+    client.sendOperation(client.revision, operation);
+    return new AwaitingConfirm(operation);
+  };
+
+  applyServer (client, revision, operation) {
+    if (revision - client.revision > 1) {
+      throw new Error("Invalid revision.");
+    }
+    client.revision = revision;
+    // When we receive a new operation from the server, the operation can be
+    // simply applied to the current document
+    client.applyOperation(operation);
+    return this;
+  };
+
+  serverAck (client, revision) {
+    throw new Error("There is no pending operation.");
+  };
+
+  // Nothing to do because the latest server state and client state are the same.
+  transformSelection (x) { return x; };
+}
+
+/*
+ * XXX: Singleton ????
+ */
+let synchronized_ = new Synchronized();
+
 class StaleWithBuffer {
   constructor (acknowlaged, buffer, client, revision) {
     this.acknowlaged = acknowlaged;
@@ -151,92 +238,14 @@ class AwaitingWithBuffer {
   };
 }
 
-class AwaitingConfirm {
-  // In the 'AwaitingConfirm' state, there's one operation the client has sent
-  // to the server and is still waiting for an acknowledgement.
-  constructor (outstanding) {
-    // Save the pending operation
-    this.outstanding = outstanding;
-  }
-
-  applyClient (client, operation) {
-    // When the user makes an edit, don't send the operation immediately,
-    // instead switch to 'AwaitingWithBuffer' state
-    return new AwaitingWithBuffer(this.outstanding, operation);
-  };
-
-  applyServer (client, revision, operation) {
-    if (revision - client.revision > 1) {
-      throw new Error("Invalid revision.");
-    }
-    client.revision = revision;
-    // This is another client's operation. Visualization:
-    //
-    //                   /\
-    // this.outstanding /  \ operation
-    //                 /    \
-    //                 \    /
-    //  pair[1]         \  / pair[0] (new outstanding)
-    //  (can be applied  \/
-    //  to the client's
-    //  current document)
-    var pair = operation.constructor.transform(this.outstanding, operation);
-    client.applyOperation(pair[1]);
-    return new AwaitingConfirm(pair[0]);
-  };
-
-  serverAck (client, revision) {
-    if (revision - client.revision > 1) {
-      return new Stale(this.outstanding, client, revision).getOperations();
-    }
-    client.revision = revision;
-    // The client's operation has been acknowledged
-    // => switch to synchronized state
-    return synchronized_;
-  };
-
-  transformSelection (selection) {
-    return selection.transform(this.outstanding);
-  };
-
-  resend (client) {
-    // The confirm didn't come because the client was disconnected.
-    // Now that it has reconnected, we resend the outstanding operation.
-    client.sendOperation(client.revision, this.outstanding);
-  };
-}
-
-class Synchronized {
-  applyClient (client, operation) {
-    // When the user makes an edit, send the operation to the server and
-    // switch to the 'AwaitingConfirm' state
-    client.sendOperation(client.revision, operation);
-    return new AwaitingConfirm(operation);
-  };
-
-  applyServer (client, revision, operation) {
-    if (revision - client.revision > 1) {
-      throw new Error("Invalid revision.");
-    }
-    client.revision = revision;
-    // When we receive a new operation from the server, the operation can be
-    // simply applied to the current document
-    client.applyOperation(operation);
-    return this;
-  };
-
-  serverAck (client, revision) {
-    throw new Error("There is no pending operation.");
-  };
-
-  // Nothing to do because the latest server state and client state are the same.
-  transformSelection (x) { return x; };
-}
-
 export default class Client {
+  static Synchronized = Synchronized;
+  static AwaitingConfirm = AwaitingConfirm;
+  static AwaitingWithBuffer = AwaitingWithBuffer;
+
   constructor(revision) {
     this.revision = revision; // the next expected revision number
-    this.setState(new Synchronized()); // start state
+    this.setState(synchronized_); // start state
   }
 
   setState (state) {
