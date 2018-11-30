@@ -1,10 +1,8 @@
-'use strict';
-
-var TextOperation    = require('common/text-operation');
-var WrappedOperation = require('common/wrapped-operation');
-var Selection        = require('common/selection');
-var Server           = require('server/server');
-var util             = require('util');
+import TextOperation from 'common/text-operation';
+import WrappedOperation from 'common/wrapped-operation';
+import Selection from 'common/selection';
+import Server from 'server/server';
+import util from 'util';
 
 function DummyLogger () {
   return {

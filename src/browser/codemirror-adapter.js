@@ -1,7 +1,105 @@
 import TextOperation from 'common/text-operation';
 import Selection from 'common/selection';
 
-export default class CodeMirror {
+let cmpPos = (a, b) => {
+  if (a.line < b.line) { return -1; }
+  if (a.line > b.line) { return 1; }
+  if (a.ch < b.ch)     { return -1; }
+  if (a.ch > b.ch)     { return 1; }
+  return 0;
+}
+
+let posEq = (a, b) => { return mpPos(a, b) === 0; }
+let posLe = (a, b) => { return cmpPos(a, b) <= 0; }
+
+let minPos = (a, b) => { return posLe(a, b) ? a : b; }
+let maxPos = (a, b) => { return posLe(a, b) ? b : a; }
+
+let codemirrorDocLength = (doc) => {
+  return doc.indexFromPos({ line: doc.lastLine(), ch: 0 }) +
+    doc.getLine(doc.lastLine()).length;
+};
+
+let operationFromCodeMirrorChanges = (changes, doc) => {
+  // Approach: Replay the changes, beginning with the most recent one, and
+  // construct the operation and its inverse. We have to convert the position
+  // in the pre-change coordinate system to an index. We have a method to
+  // convert a position in the coordinate system after all changes to an index,
+  // namely CodeMirror's `indexFromPos` method. We can use the information of
+  // a single change object to convert a post-change coordinate system to a
+  // pre-change coordinate system. We can now proceed inductively to get a
+  // pre-change coordinate system for all changes in the linked list.
+  // A disadvantage of this approach is its complexity `O(n^2)` in the length
+  // of the linked list of changes.
+
+  var docEndLength = codemirrorDocLength(doc);
+  var operation    = new TextOperation().retain(docEndLength);
+  var inverse      = new TextOperation().retain(docEndLength);
+
+  var indexFromPos = function (pos) {
+    return doc.indexFromPos(pos);
+  };
+
+  function last (arr) { return arr[arr.length - 1]; }
+
+  function sumLengths (strArr) {
+    if (strArr.length === 0) { return 0; }
+    var sum = 0;
+    for (var i = 0; i < strArr.length; i++) { sum += strArr[i].length; }
+    return sum + strArr.length - 1;
+  }
+
+  function updateIndexFromPos (indexFromPos, change) {
+    return function (pos) {
+      if (posLe(pos, change.from)) { return indexFromPos(pos); }
+      if (posLe(change.to, pos)) {
+        return indexFromPos({
+          line: pos.line + change.text.length - 1 - (change.to.line - change.from.line),
+          ch: (change.to.line < pos.line) ?
+            pos.ch :
+            (change.text.length <= 1) ?
+              pos.ch - (change.to.ch - change.from.ch) + sumLengths(change.text) :
+              pos.ch - change.to.ch + last(change.text).length
+        }) + sumLengths(change.removed) - sumLengths(change.text);
+      }
+      if (change.from.line === pos.line) {
+        return indexFromPos(change.from) + pos.ch - change.from.ch;
+      }
+      return indexFromPos(change.from) +
+        sumLengths(change.removed.slice(0, pos.line - change.from.line)) +
+        1 + pos.ch;
+    };
+  }
+
+
+  for (var i = changes.length - 1; i >= 0; i--) {
+    var change = changes[i];
+    indexFromPos = updateIndexFromPos(indexFromPos, change);
+
+    var fromIndex = indexFromPos(change.from);
+    var restLength = docEndLength - fromIndex - sumLengths(change.text);
+
+    operation = new TextOperation()
+      .retain(fromIndex)
+      ['delete'](sumLengths(change.removed))
+      .insert(change.text.join('\n'))
+      .retain(restLength)
+      .compose(operation);
+
+    inverse = inverse.compose(new TextOperation()
+      .retain(fromIndex)
+      ['delete'](sumLengths(change.text))
+      .insert(change.removed.join('\n'))
+      .retain(restLength)
+    );
+
+    docEndLength += sumLengths(change.removed) - sumLengths(change.text);
+  }
+
+  return [operation, inverse];
+};
+
+export default class CodeMirrorAdapter {
   constructor(cm) {
     this.cm = cm;
     this.ignoreNextChange = false;
@@ -11,7 +109,7 @@ export default class CodeMirror {
     // use addStyleRule
     this.addedStyle = {};
     this.styleElement = document.createElement('style');
-    document.documentElement.getElementsByTagName('head')[0].appendChild(styleElement);
+    document.documentElement.getElementsByTagName('head')[0].appendChild(this.styleElement);
     this.styleSheet = this.styleElement.sheet;
 
     this._bind(this, 'onChanges');
@@ -40,83 +138,7 @@ export default class CodeMirror {
   // in CodeMirror v4) or single change or linked list of changes (as returned
   // by the 'change' event in CodeMirror prior to version 4) into a
   // TextOperation and its inverse and returns them as a two-element array.
-  static operationFromCodeMirrorChanges = (changes, doc) => {
-    // Approach: Replay the changes, beginning with the most recent one, and
-    // construct the operation and its inverse. We have to convert the position
-    // in the pre-change coordinate system to an index. We have a method to
-    // convert a position in the coordinate system after all changes to an index,
-    // namely CodeMirror's `indexFromPos` method. We can use the information of
-    // a single change object to convert a post-change coordinate system to a
-    // pre-change coordinate system. We can now proceed inductively to get a
-    // pre-change coordinate system for all changes in the linked list.
-    // A disadvantage of this approach is its complexity `O(n^2)` in the length
-    // of the linked list of changes.
-
-    var docEndLength = this._codemirrorDocLength(doc);
-    var operation    = new TextOperation().retain(docEndLength);
-    var inverse      = new TextOperation().retain(docEndLength);
-
-    var indexFromPos = function (pos) {
-      return doc.indexFromPos(pos);
-    };
-
-    function last (arr) { return arr[arr.length - 1]; }
-
-    function sumLengths (strArr) {
-      if (strArr.length === 0) { return 0; }
-      var sum = 0;
-      for (var i = 0; i < strArr.length; i++) { sum += strArr[i].length; }
-      return sum + strArr.length - 1;
-    }
-
-    function updateIndexFromPos (indexFromPos, change) {
-      return function (pos) {
-        if (posLe(pos, change.from)) { return indexFromPos(pos); }
-        if (posLe(change.to, pos)) {
-          return indexFromPos({
-            line: pos.line + change.text.length - 1 - (change.to.line - change.from.line),
-            ch: (change.to.line < pos.line) ?
-              pos.ch :
-              (change.text.length <= 1) ?
-                pos.ch - (change.to.ch - change.from.ch) + sumLengths(change.text) :
-                pos.ch - change.to.ch + last(change.text).length
-          }) + sumLengths(change.removed) - sumLengths(change.text);
-        }
-        if (change.from.line === pos.line) {
-          return indexFromPos(change.from) + pos.ch - change.from.ch;
-        }
-        return indexFromPos(change.from) +
-          sumLengths(change.removed.slice(0, pos.line - change.from.line)) +
-          1 + pos.ch;
-      };
-    }
-
-    for (var i = changes.length - 1; i >= 0; i--) {
-      var change = changes[i];
-      indexFromPos = updateIndexFromPos(indexFromPos, change);
-
-      var fromIndex = indexFromPos(change.from);
-      var restLength = docEndLength - fromIndex - sumLengths(change.text);
-
-      operation = new TextOperation()
-        .retain(fromIndex)
-        ['delete'](sumLengths(change.removed))
-        .insert(change.text.join('\n'))
-        .retain(restLength)
-        .compose(operation);
-
-      inverse = inverse.compose(new TextOperation()
-        .retain(fromIndex)
-        ['delete'](sumLengths(change.text))
-        .insert(change.removed.join('\n'))
-        .retain(restLength)
-      );
-
-      docEndLength += sumLengths(change.removed) - sumLengths(change.text);
-    }
-
-    return [operation, inverse];
-  };
+  static operationFromCodeMirrorChanges = operationFromCodeMirrorChanges
 
   // Singular form for backwards compatibility.
   static operationFromCodeMirrorChange =
@@ -223,7 +245,7 @@ export default class CodeMirror {
     this.cm.setSelections(ranges);
   };
 
-  addStyleRule () {
+  addStyleRule (css) {
     if (this.addedStyle[css]) { return; }
     this.addedStyle[css] = true;
     this.styleSheet.insertRule(css, (this.styleSheet.cssRules || this.styleSheet.rules).length);
@@ -247,8 +269,8 @@ export default class CodeMirror {
     var cursorCoords = this.cm.cursorCoords(cursorPos);
     var cursorEl = document.createElement('span');
     cursorEl.className = 'other-client';
-    cursorEl.style.display = 'none';
-    /*
+    cursorEl.style.display = 'inline-block';
+
     cursorEl.style.padding = '0';
     cursorEl.style.marginLeft = cursorEl.style.marginRight = '-1px';
     cursorEl.style.borderLeftWidth = '2px';
@@ -256,7 +278,7 @@ export default class CodeMirror {
     cursorEl.style.borderLeftColor = color;
     cursorEl.style.height = (cursorCoords.bottom - cursorCoords.top) * 0.9 + 'px';
     cursorEl.style.zIndex = 0;
-    */
+
     cursorEl.setAttribute('data-clientid', clientId);
     return this.cm.setBookmark(cursorPos, { widget: cursorEl, insertLeft: true });
   };
@@ -283,9 +305,11 @@ export default class CodeMirror {
   setOtherSelection (selection, color, clientId) {
     var selectionObjects = [];
     for (var i = 0; i < selection.ranges.length; i++) {
-      var range = selection.ranges[i];
+      let range = selection.ranges[i];
+      console.log(range);
+      console.log(range.isEmpty());
       if (range.isEmpty()) {
-        //selectionObjects[i] = this.setOtherCursor(range.head, color, clientId);
+        selectionObjects[i] = this.setOtherCursor(range.head, color, clientId);
       } else {
         selectionObjects[i] = this.setOtherSelectionRange(range, color, clientId);
       }
@@ -337,14 +361,6 @@ export default class CodeMirror {
     };
   }
 
-  _cmpPos (a, b) {
-    if (a.line < b.line) { return -1; }
-    if (a.line > b.line) { return 1; }
-    if (a.ch < b.ch)     { return -1; }
-    if (a.ch > b.ch)     { return 1; }
-    return 0;
-  }
-
   _hex2rgb(hex) {
     if (hex[0] === "#") { hex = hex.substr(1); }
     if (hex.length === 3) {
@@ -359,16 +375,5 @@ export default class CodeMirror {
       green: parseInt(triplets[1], 16),
       blue: parseInt(triplets[2], 16)
     };
-  }
-
-  _posEq (a, b) { return this._cmpPos(a, b) === 0; }
-  _posLe (a, b) { return this._cmpPos(a, b) <= 0; }
-
-  _minPos (a, b) { return this._posLe(a, b) ? a : b; }
-  _maxPos (a, b) { return this._posLe(a, b) ? b : a; }
-
-  _codemirrorDocLength (doc) {
-    return doc.indexFromPos({ line: doc.lastLine(), ch: 0 }) +
-      doc.getLine(doc.lastLine()).length;
   }
 }

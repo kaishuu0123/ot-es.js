@@ -1,0 +1,65 @@
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equip="X-UA-Compatible" content="ie=edge">
+  <title>ot-es.js example</title>
+</head>
+
+<body>
+  <div class="container" id="wrapper">
+    <h1>Collaborative editing with CodeMirror</h1>
+    <div class="row">
+      <div class="col-sm-9" id="editor-wrapper">
+        <div class="row">
+
+          <div class="col-sm-6 col-md-6">
+            <form id="login-form" class="form-inline btn-toolbar">
+              <div class="input-group">
+                <input id="username" class="form-control" autofocus="autofocus" type="text" placeholder="Username"
+                  required="required" value="" />
+                <span class="input-group-btn">
+                  <input type="submit" class="btn btn-success" value="Join" />
+                </span>
+              </div>
+            </form>
+          </div>
+
+          <div class="col-sm-6 col-md-6">
+            <div class="btn-toolbar">
+              <div class="btn-group">
+                <a id="undo-btn" class="btn btn-default" href="#" title="Undo">
+                  <span class="fa fa-arrow-left"></span>
+                </a>
+                <a id="redo-btn" class="btn btn-default" href="#" title="Redo">
+                  <span class="fa fa-arrow-right"></span>
+                </a>
+              </div>
+              <div class="btn-group">
+                <a id="bold-btn" class="btn btn-default" href="#" title="Bold">
+                  <span class="fa fa-bold"></span>
+                </a>
+                <a id="italic-btn" class="btn btn-default" href="#" title="Italic">
+                  <span class="fa fa-italic"></span>
+                </a>
+                <a id="code-btn" class="btn btn-default" href="#" title="Code">
+                  <span class="fa fa-barcode"></span>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-sm-3">
+        <div class="well" id="userlist-wrapper">
+          <h2>Users</h2>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="ot-es-demo-client.js"></script>
+</body>
+
+</html>

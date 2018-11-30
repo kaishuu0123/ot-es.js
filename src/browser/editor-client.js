@@ -155,7 +155,7 @@ class SelfMeta {
   };
 }
 
-export default class EditorClient extends CLient {
+export default class EditorClient extends Client {
   constructor (revision, clients, serverAdapter, editorAdapter) {
     super(revision);
 
