@@ -6,7 +6,17 @@ module.exports = {
   mode: 'development',
 
   // メインとなるJavaScriptファイル（エントリーポイント）
-  entry: './src/index.js',
+  entry: {
+    "ot-es": './src/index.js'
+  },
+
+  output: {
+    filename: '[name].js',
+    library: 'ot-es',
+    libraryTarget: 'umd',
+    globalObject: 'typeof self !== \'undefined\' ? self : this',
+    path: path.resolve(__dirname, 'dist')
+  },
 
   module: {
     rules: [
