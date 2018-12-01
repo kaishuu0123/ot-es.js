@@ -14,11 +14,15 @@
   "bugs": {
     "url": "https://github.com/kaishuu0123/ot-es.js/issues"
   },
-  "main": "./lib/index.js",
-  "dependencies": {},
+  "module": "./lib/index.js",
+  "main": "./dist/ot-es.js",
+  "dependencies": {
+    "socket.io": "^2.2.0"
+  },
   "devDependencies": {
     "@babel/core": "^7.1.6",
     "@babel/plugin-proposal-class-properties": "^7.1.0",
+    "@babel/plugin-proposal-export-default-from": "^7.0.0",
     "@babel/preset-env": "^7.1.6",
     "babel-core": "^7.0.0-bridge.0",
     "babel-jest": "^23.6.0",
@@ -34,13 +38,13 @@
     "grunt-contrib-watch": "*",
     "jest": "^23.6.0",
     "regenerator-runtime": "^0.13.1",
-    "socket.io": "1.2.1",
     "webpack": "^4.25.1",
     "webpack-cli": "^3.1.2"
   },
   "scripts": {
     "test": "jest",
-    "build": "webpack --mode development"
+    "build:dev": "webpack --mode development",
+    "build:prod": "webpack --mode production"
   },
   "licenses": [
     {

@@ -306,8 +306,6 @@ export default class CodeMirrorAdapter {
     var selectionObjects = [];
     for (var i = 0; i < selection.ranges.length; i++) {
       let range = selection.ranges[i];
-      console.log(range);
-      console.log(range.isEmpty());
       if (range.isEmpty()) {
         selectionObjects[i] = this.setOtherCursor(range.head, color, clientId);
       } else {

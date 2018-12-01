@@ -20,16 +20,16 @@ export default class Server extends EventEmitter {
     }
     // Find all operations that the client didn't know of when it sent the
     // operation ...
-    var concurrentOperations = this.operations.slice(revision);
+    let concurrentOperations = this.operations.slice(revision);
 
     // ... and transform the operation against all these operations ...
-    var transform = operation.constructor.transform;
+    let transform = operation.constructor.transform;
     for (var i = 0; i < concurrentOperations.length; i++) {
       operation = transform(operation, concurrentOperations[i])[0];
     }
 
     // ... and apply that on the document.
-    var newDocument = operation.apply(this.document);
+    let newDocument = operation.apply(this.document);
     // ignore if exceed the max length of document
     if(typeof this.documentMaxLength === 'number' &&
         newDocument.length > this.documentMaxLength &&

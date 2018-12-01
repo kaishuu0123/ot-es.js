@@ -1,5 +1,5 @@
-// import ot from '../dist/ot-es';
-let ot = require('../dist/ot-es');
+import ot from '../dist/ot-es';
+
 import express from 'express';
 import serveStatic from 'serve-static';
 import socketio from 'socket.io';
@@ -11,7 +11,7 @@ let appServer = http.createServer(app);
 
 app.use('/', serveStatic(path.join(__dirname, './public')));
 
-let io = socketio.listen(appServer);
+let io = socketio.listen(appServer, { wsEngine: 'ws' });
 
 let str = "# This is a Markdown heading\n\n"
         + "1. un\n"

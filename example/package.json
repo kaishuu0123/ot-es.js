@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "server": "babel-node --presets @babel/env server.js",
-    "client:build": "webpack --mode development",
+    "client:build": "webpack --mode production",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
