@@ -1,10 +1,11 @@
-let ot = require('../../dist/ot-es');
+import ot from '../../dist/ot-es';
+
+import io from 'socket.io-client';
 import CodeMirror from 'codemirror';
 // Bootstrapのスタイルシート側の機能を読み込む
 import 'bootstrap/dist/css/bootstrap.min.css';
 // BootstrapのJavaScript側の機能を読み込む
 import 'bootstrap';
-import io from 'socket.io-client';
 import 'codemirror/lib/codemirror.css';
 import 'codemirror/mode/gfm/gfm.js';
 import 'codemirror/addon/edit/continuelist.js';
@@ -138,19 +139,19 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // uncomment to simulate more latency
-  (function () {
-    let emit = socket.emit;
-    let queue = [];
-    socket.emit = function () {
-      queue.push(arguments);
-      return socket;
-    };
-    setInterval(function () {
-      if (queue.length) {
-        emit.apply(socket, queue.shift());
-      }
-    }, 800);
-  })();
+  // (function () {
+  //   let emit = socket.emit;
+  //   let queue = [];
+  //   socket.emit = function () {
+  //     queue.push(arguments);
+  //     return socket;
+  //   };
+  //   setInterval(function () {
+  //     if (queue.length) {
+  //       emit.apply(socket, queue.shift());
+  //     }
+  //   }, 800);
+  // })();
 
   function init (str, revision, clients, serverAdapter) {
     cm.setValue(str);
@@ -164,7 +165,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     cm.on('change', function () {
       if (!cmClient) { return; }
-      console.log(cmClient.undoManager.canUndo(), cmClient.undoManager.canRedo());
       (cmClient.undoManager.canUndo() ? enable : disable)(undoBtn);
       (cmClient.undoManager.canRedo() ? enable : disable)(redoBtn);
     });
