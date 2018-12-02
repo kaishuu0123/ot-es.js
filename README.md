@@ -1,5 +1,14 @@
 # ot-es.js
 
+ot-es.js is realtime collaborative editing javascript library.
+ot means Operation Transformation.
+
+This project forked from [Operational-Transformation/ot.js](https://github.com/Operational-Transformation/ot.js).
+Aiming to enable import from various projects using modern technology.
+## Live demo:
+
+https://ot-es-demo.herokuapp.com/
+
 ## Goal
 
 * can export as ES modules
@@ -7,10 +16,7 @@
   * build with webpack
   * (development) webpack-dev-server support.
 * comfortable demo environment
-
-## Live demo:
-
-https://ot-es-demo.herokuapp.com/
+* documentation
 
 ## Documentation
 
@@ -45,3 +51,11 @@ https://github.com/kaishuu0123/ot-es.js/issues
 [npm-url]: https://npmjs.org/package/ot
 [travis-image]: https://img.shields.io/travis/Operational-Transformation/ot.js.svg?style=flat
 [travis-url]: https://travis-ci.org/Operational-Transformation/ot.js
+
+## Credits
+
+This work is based off of several existing projects:
+
+* https://github.com/Operational-Transformation/ot.js/
+* https://github.com/rike422/operatta-js
+
