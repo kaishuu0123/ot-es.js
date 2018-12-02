@@ -1,4 +1,4 @@
-import ot from '../dist/ot-es';
+import ot from './dist/ot-es';
 
 import express from 'express';
 import serveStatic from 'serve-static';

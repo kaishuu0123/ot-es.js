@@ -63,4 +63,7 @@ module.exports = {
       'node_modules'
     ]
   }
+  // plugins: [
+  //   new BundleAnalyzerPlugin()
+  // ]
 };

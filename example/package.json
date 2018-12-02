@@ -6,6 +6,7 @@
   "scripts": {
     "server": "babel-node --presets @babel/env server.js",
     "client:build": "webpack --mode production",
+    "client:analyze": "webpack --profile",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
@@ -27,10 +28,12 @@
   },
   "devDependencies": {
     "@babel/preset-env": "^7.1.6",
+    "babel-loader": "^8.0.4",
     "css-loader": "^1.0.1",
     "style-loader": "^0.23.1",
     "url-loader": "^1.1.2",
     "webpack": "^4.26.1",
+    "webpack-bundle-analyzer": "^3.0.3",
     "webpack-cli": "^3.1.2"
   }
 }

@@ -1,4 +1,4 @@
-import ot from '../../dist/ot-es';
+import ot from '../dist/ot-es';
 
 import io from 'socket.io-client';
 import CodeMirror from 'codemirror';
