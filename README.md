@@ -9,6 +9,13 @@ Aiming to enable import from various projects using modern technology.
 
 https://ot-es-demo.herokuapp.com/
 
+How to use alone(only you)
+
+1. Open Live demo URL.
+1. Open another browser window with the same URL.
+1. Enter a different user name.
+1. Enjoy :tada:
+
 ## Goal
 
 * can export as ES modules
