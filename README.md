@@ -8,16 +8,38 @@
   * (development) webpack-dev-server support.
 * comfortable demo environment
 
-## Summary
+## Live demo:
 
-* Documentation: http://operational-transformation.github.io/
-* Compatibility: Requires CodeMirror >= 4.0
-* Live demo: http://ot-demo.timbaumann.info/
-* Visualization: http://operational-transformation.github.io/visualization.html
-* License: [MIT license](https://github.com/kaishuu0123/ot-es.js/blob/master/LICENSE)
-* Report bugs at https://github.com/kaishuu0123/ot-es.js/issues
-* Travis CI: [![Build Status][travis-image]][travis-url]
-* NPM: [![NPM][npm-image]][npm-url]
+https://ot-es-demo.herokuapp.com/
+
+## Documentation
+
+http://operational-transformation.github.io/
+
+## Compatibility
+
+Requires CodeMirror >= 4.0
+
+## Visualization
+
+http://operational-transformation.github.io/visualization.html
+## License
+
+[MIT license](https://github.com/kaishuu0123/ot-es.js/blob/master/LICENSE)
+
+## Report bugs
+
+https://github.com/kaishuu0123/ot-es.js/issues
+
+## Travis CI
+
+[![Build Status][travis-image]][travis-url]
+
+## NPM
+
+[![NPM][npm-image]][npm-url]
+
+## Other 
 
 [npm-image]: https://img.shields.io/npm/v/ot.svg?style=flat
 [npm-url]: https://npmjs.org/package/ot
