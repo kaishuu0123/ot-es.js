@@ -1,5 +1,8 @@
 # ot-es.js
 
+[![CircleCI](https://circleci.com/gh/kaishuu0123/ot-es.js.svg?style=svg)](https://circleci.com/gh/kaishuu0123/ot-es.js)
+
+
 ot-es.js is realtime collaborative editing javascript library.
 ot means Operation Transformation.
 

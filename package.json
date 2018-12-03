@@ -27,6 +27,7 @@
     "babel-jest": "^23.6.0",
     "babel-loader": "^8.0.4",
     "babel-plugin-transform-export-default": "^7.0.0-alpha.20",
+    "coveralls": "^3.0.2",
     "grunt": "*",
     "grunt-contrib-concat": "*",
     "grunt-contrib-connect": "*",
@@ -42,6 +43,7 @@
   },
   "scripts": {
     "test": "jest",
+    "test:ci": "jest --coverage",
     "build:dev": "webpack --mode development",
     "build:prod": "webpack --mode production"
   },

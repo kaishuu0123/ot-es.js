@@ -34,5 +34,9 @@ jobs:
           key: v1-dependencies-{{ checksum "package.json" }}
         
       # run tests!
-      - run: yarn test
+      - run: yarn test:ci
 
+      # push to coveralls
+      - run:
+          name: post coverage
+          command: cat ./coverage/lcov.info | ./node_modules/.bin/coveralls
