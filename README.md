@@ -1,7 +1,7 @@
 # ot-es.js
 
 [![CircleCI](https://circleci.com/gh/kaishuu0123/ot-es.js.svg?style=svg)](https://circleci.com/gh/kaishuu0123/ot-es.js)
-
+[![Coverage Status](https://coveralls.io/repos/github/kaishuu0123/ot-es.js/badge.svg?branch=master)](https://coveralls.io/github/kaishuu0123/ot-es.js?branch=master)
 
 ot-es.js is realtime collaborative editing javascript library.
 ot means Operation Transformation.
