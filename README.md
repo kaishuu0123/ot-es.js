@@ -2,7 +2,11 @@
 
 [![CircleCI](https://circleci.com/gh/kaishuu0123/ot-es.js.svg?style=svg)](https://circleci.com/gh/kaishuu0123/ot-es.js)
 [![Coverage Status](https://coveralls.io/repos/github/kaishuu0123/ot-es.js/badge.svg?branch=master)](https://coveralls.io/github/kaishuu0123/ot-es.js?branch=master)
-![npm](https://img.shields.io/npm/dt/ot-es.js.svg)
+[![npm downloads](https://img.shields.io/npm/dt/ot-es.js.svg)](https://www.npmjs.com/package/ot-es.js)
+[![npm_version](https://img.shields.io/npm/v/ot-es.js.svg)](https://www.npmjs.com/package/ot-es.js)
+[![GitHub issues](https://img.shields.io/github/issues/kaishuu0123/ot-es.js.svg)](https://github.com/kaishuu0123/ot-es.js/issues)
+[![GitHub license](https://img.shields.io/github/license/kaishuu0123/ot-es.js.svg)](https://github.com/kaishuu0123/ot-es.js/blob/master/LICENSE)
+
 
 ot-es.js is realtime collaborative editing javascript library.
 ot means Operational Transformation.
@@ -40,28 +44,6 @@ Requires CodeMirror >= 4.0
 ## Visualization
 
 http://operational-transformation.github.io/visualization.html
-## License
-
-[MIT license](https://github.com/kaishuu0123/ot-es.js/blob/master/LICENSE)
-
-## Report bugs
-
-https://github.com/kaishuu0123/ot-es.js/issues
-
-## Travis CI
-
-[![Build Status][travis-image]][travis-url]
-
-## NPM
-
-[![NPM][npm-image]][npm-url]
-
-## Other 
-
-[npm-image]: https://img.shields.io/npm/v/ot.svg?style=flat
-[npm-url]: https://npmjs.org/package/ot
-[travis-image]: https://img.shields.io/travis/Operational-Transformation/ot.js.svg?style=flat
-[travis-url]: https://travis-ci.org/Operational-Transformation/ot.js
 
 ## Credits
 
